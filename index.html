@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next Synergy Tech Communication Channel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        .container {
+            width: 60%;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input, textarea, button {
+            width: 90%;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .post {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px auto;
+            width: 60%;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .comment {
+            margin-left: 20px;
+            font-size: 0.9em;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+    <h1> Communication Channel</h1>
+
+    <!-- Login/Register Section -->
+    <div class="container" id="authSection">
+        <h2>Login / Register</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="register()">Register</button>
+        <button onclick="login()">Login</button>
+        <p id="authMessage"></p>
+    </div>
+
+    <!-- Post Section (Only for Logged-in Users) -->
+    <div class="container" id="postSection" style="display: none;">
+        <h2>Create a Post</h2>
+        <textarea id="postInput" placeholder="Write a post..."></textarea>
+        <button onclick="createPost()">Post</button>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <h2>Posts</h2>
+    <div id="postsContainer"></div>
+
+    <script>
+        const API_URL = "http://localhost:5000"; // Change when deploying
+        let userToken = localStorage.getItem("token");
+
+        // Show sections based on authentication
+        function checkAuth() {
+            if (userToken) {
+                document.getElementById("authSection").style.display = "none";
+                document.getElementById("postSection").style.display = "block";
+            } else {
+                document.getElementById("authSection").style.display = "block";
+                document.getElementById("postSection").style.display = "none";
+            }
+        }
+
+        // Register
+        function register() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            fetch(`${API_URL}/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("authMessage").innerText = data.message || data.error;
+            });
+        }
+
+        // Login
+        function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            fetch(`${API_URL}/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.token) {
+                    localStorage.setItem("token", data.token);
+                    userToken = data.token;
+                    checkAuth();
+                    fetchPosts();
+                } else {
+                    document.getElementById("authMessage").innerText = data.error;
+                }
+            });
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem("token");
+            userToken = null;
+            checkAuth();
+        }
+
+        // Fetch and display posts
+        function fetchPosts() {
+            fetch(`${API_URL}/posts`)
+                .then(response => response.json())
+                .then(posts => {
+                    const container = document.getElementById("postsContainer");
+                    container.innerHTML = "";
+                    posts.forEach(post => {
+                        const postElement = document.createElement("div");
+                        postElement.classList.add("post");
+                        postElement.innerHTML = `
+                            <p><strong>${post.user}</strong>: ${post.text}</p>
+                            <button onclick="addComment(${post.id})">Comment</button>
+                            <button onclick="repost(${post.id})">Repost (${post.reposts})</button>
+                            <div id="comments-${post.id}"></div>
+                        `;
+                        container.appendChild(postElement);
+                        
+                        // Show comments
+                        post.comments.forEach(comment => {
+                            const commentElement = document.createElement("div");
+                            commentElement.classList.add("comment");
+                            commentElement.innerHTML = `<strong>${comment.user}</strong>: ${comment.text}`;
+                            document.getElementById(`comments-${post.id}`).appendChild(commentElement);
+                        });
+                    });
+                });
+        }
+
+        // Create a post (only if logged in)
+        function createPost() {
+            if (!userToken) return alert("You must be logged in to post");
+
+            const text = document.getElementById("postInput").value;
+            fetch(`${API_URL}/post`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`
+                },
+                body: JSON.stringify({ text }),
+            })
+            .then(() => {
+                document.getElementById("postInput").value = "";
+                fetchPosts();
+            });
+        }
+
+        // Add a comment (only if logged in)
+        function addComment(postId) {
+            if (!userToken) return alert("You must be logged in to comment");
+
+            const text = prompt("Enter your comment:");
+            if (text) {
+                fetch(`${API_URL}/comment`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${userToken}`
+                    },
+                    body: JSON.stringify({ postId, text }),
+                }).then(fetchPosts);
+            }
+        }
+
+        // Repost (only if logged in)
+        function repost(postId) {
+            if (!userToken) return alert("You must be logged in to repost");
+
+            fetch(`${API_URL}/repost`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`
+                },
+                body: JSON.stringify({ postId }),
+            }).then(fetchPosts);
+        }
+
+        // Load posts and check authentication on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            checkAuth();
+            fetchPosts();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+{
+  "posts": [
+    {
+      "id": 1741373512457,
+      "text": "hello",
+      "comments": [
+        {
+          "id": 1741373523790,
+          "text": "gegreat"
+        }
+      ],
+      "reposts": 3
+    },
+    {
+      "id": 1741373541683,
+      "text": "",
+      "comments": [
+        {
+          "id": 1741373555368,
+          "text": "that is great"
+        }
+      ],
+      "reposts": 0
+    },
+    {
+      "id": 1741374244875,
+      "text": "Hello next synergy",
+      "user": "eshetuwek1@gmail.com",
+      "comments": [],
+      "reposts": 0
+    }
+  ]
+}

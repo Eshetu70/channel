@@ -1,0 +1,15 @@
+{
+  "users": [
+    {
+      "id": 1741374229536,
+      "email": "eshetuwek1@gmail.com",
+      "password": "$2b$10$cVD201NdfqCmJREsY9d2TO8jH8NzBZviiW6qo/845Rw/ZqJ2fDpq."
+    },
+    {
+      "id": 1741375205780,
+      "email": "escmnk@gmail.com",
+      "password": "$2b$10$re1UILBZFHvmhh3i6btFeuLiZAFiZ08tjNIWq2hQW07AR5fY27yOy"
+    }
+  ],
+  "posts": []
+}
